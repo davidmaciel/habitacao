@@ -10,7 +10,11 @@ pacman::p_load(
   here,
   readxl,
   janitor,
-  googledrive
+  googledrive,
+  themis,
+  textrecipes,
+  tidypredict,
+  finetune
 )
 conflicts_prefer(dplyr::select)
 conflicts_prefer(dplyr::filter)

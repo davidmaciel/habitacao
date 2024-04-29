@@ -56,5 +56,16 @@ drive_auth()
 
 # Replace the target list below with your own:
 tar_plan(
-
+  #importação
+  drive_trafico = "https://drive.google.com/drive/folders/1hObuFljCRorN9kT6lDyM8phurqODt6m2",
+  drive_milicia = "https://drive.google.com/drive/folders/1t2dO0kc-Q9RLs5vyjTZFh9oEzWELA3Oj",
+  file_amostra = "https://docs.google.com/spreadsheets/d/1i-lv310xUTSiS8SNisLh_ied_Z8Jg9dg",
+  file_dd = "https://drive.google.com/file/d/1PnKd0BwUCIy3tiwTget-hL_cc4Y2XJwC",
+  dd = le_dd(file_dd),
+  ass_trafic = le_assunto(drive_trafico, origem = "trafico"),
+  ass_milic = le_assunto(drive_milicia, origem = "milicia"),
+  am_raw = le_amostra(file_amostra),
+  #construção e limpeza
+  assunto = faz_assunto(ass_milic, ass_trafic),
+  amostra = faz_amostra(am_raw, dd, assunto)
 )
