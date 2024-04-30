@@ -15,20 +15,30 @@ faz_amostra <- function(am_raw, dd, assunto){
     select(den_cd, ano, den_logr_uf, den_logr_bairro, den_logr_mun,
            matches("_prob"), cv, tcp, ada, milic, matches("trafic_"),
            sem_grupo, policia, origem) |> distinct()
-  pesos <- dd2 |>
-    select(den_cd, origem) |>
-    distinct() |>
-    group_by(origem) |>
-    count() |>
-    ungroup()
 
-  left_join(am_raw, assunto, by = "den_cd") |>
-    mutate(tipo_de_assunto = replace_na(tipo_de_assunto, "nao_informado")) |>
+  #limpeza do assunto
+  assunto2 <- assunto |>
+    filter(den_cd %in% unique(am_raw$den_cd)) |>
+    fastDummies::dummy_cols(select_columns = "tipo_de_assunto", remove_first_dummy = T,
+                            remove_selected_columns = T) |>
+    clean_names() |>
+    group_by(den_cd) |>
+    summarise(across(is.numeric, ~sum(.x, na.rm = T))) |>
+    ungroup() |>
+    mutate(across(-den_cd, function(x){ifelse(x >=1, 1, 0)}))
+
+
+
+  left_join(am_raw, assunto2, by = "den_cd") |>
+    mutate(
+      tipo_de_assunto_si = if_else(
+        is.na(tipo_de_assunto_ameaca), 1, 0)) |>
+    mutate(across(matches("tipo_de_"), ~replace_na(.x, 0))) |>
     inner_join(dd2, by = "den_cd")
 
 }
 
-limpa_texto <- function(x,
+limpa_amostra <- function(x,
                             stopwords_source = c("stopwords-iso",
                                                  "snowball",
                                                  "nltk")){
@@ -43,10 +53,10 @@ limpa_texto <- function(x,
 
   #dicionário para lematização
 
+
   dic <- textstem::make_lemma_dictionary(x[["den_texto"]], lang = "pt_BR")
 
-  x |>
-    dplyr::mutate(origem = factor(origem)) |>
+  x  <- x |>
     dplyr::mutate(den_texto_norm =
                     stringr::str_replace_all(
                       den_texto,
@@ -71,8 +81,22 @@ limpa_texto <- function(x,
                     stringr::str_to_lower() |>
                     textstem::lemmatize_strings(dictionary = dic) |>
                     stringi::stri_trans_general(id = "Latin-ASCII")) |>
-    dplyr::select(-den_texto)
-
+    #transformação das variáveis em fator
+    select(-origem.x, -den_logr_uf) |>
+    rename("origem" = origem.y) |>
+    mutate(origem = factor(origem),
+           den_logr_mun = factor(den_logr_mun),
+           den_logr_bairro = factor(den_logr_bairro)) |>
+    clean_names()
+  vars <- c("cv","tcp","ada","milic","trafic_na","trafic_terge","trafic_noun",
+            "sem_grupo","policia", "intermediacao_acesso_terra",
+            "produca_habitacional", "intermediacao_producao_publica", "controle_producao_privada",
+            "construcao_de_barricadas_e_fechamento_de_ruas", "intervencao_associativismo",
+            "colaboracao_associativismo")
+  x |>
+    mutate(across(all_of(vars), ~factor(.x, levels = c(1,0), labels = c("sim","não")))) |>
+    mutate(ano = ano - min(ano)) |>
+    mutate(peso = if_else(origem == "trafico", 9.975, 1))
 
 
 }

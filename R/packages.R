@@ -3,6 +3,10 @@ if(system.file(package = "pacman") == ""){
 }
 
 pacman::p_load(
+  finetune,
+  doParallel,
+  data.table,
+  tidymodels,
   conflicted,
   tidyverse,
   targets,
@@ -14,9 +18,14 @@ pacman::p_load(
   themis,
   textrecipes,
   tidypredict,
-  finetune
+  finetune,
+  fst,
+  stopwords,
+  textstem,
+  fastDummies
 )
 conflicts_prefer(dplyr::select)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(spatstat.geom::area)
 conflicts_prefer(dplyr::lag)
+conflicts_prefer(yardstick::spec)

@@ -4,12 +4,7 @@
 #   https://books.ropensci.org/targets/walkthrough.html#inspect-the-pipeline
 
 # Load packages required to define the pipeline:
-pacman::p_load(
-  targets,
-  tarchetypes,
-  tidyverse,
-  tidymodels
-)
+library(targets)
 # library(tarchetypes) # Load other packages as needed.
 
 # Set target options:
@@ -52,20 +47,33 @@ tar_option_set(
 # Run the R scripts in the R/ folder with your custom functions:
 tar_source()
 drive_auth()
+set.seed(22)
 # tar_source("other_functions.R") # Source other scripts as needed.
 
 # Replace the target list below with your own:
 tar_plan(
-  #importação
+  #importação####
   drive_trafico = "https://drive.google.com/drive/folders/1hObuFljCRorN9kT6lDyM8phurqODt6m2",
   drive_milicia = "https://drive.google.com/drive/folders/1t2dO0kc-Q9RLs5vyjTZFh9oEzWELA3Oj",
   file_amostra = "https://docs.google.com/spreadsheets/d/1i-lv310xUTSiS8SNisLh_ied_Z8Jg9dg",
   file_dd = "https://drive.google.com/file/d/1PnKd0BwUCIy3tiwTget-hL_cc4Y2XJwC",
+  file_pt = "pt_BR.dic",
   dd = le_dd(file_dd),
   ass_trafic = le_assunto(drive_trafico),
   ass_milic = le_assunto(drive_milicia),
   am_raw = le_amostra(file_amostra),
-  #construção e limpeza
+  #construção e limpeza####
   assunto = faz_assunto(ass_milic, ass_trafic),
-  amostra = faz_amostra(am_raw, dd, assunto)
+  amostra = faz_amostra(am_raw, dd, assunto),
+  amostra_clean  = limpa_amostra(amostra, stopwords_source = "stopwords-iso"),
+  #modelo para intermediação de acesso à terra####
+  ##split
+  split_inic_ict = initial_split(amostra_clean, strata =intermediacao_acesso_terra),
+  treino_ict  = training(split_inic_ict),
+  teste_ict = testing(split_inic_ict),
+  fold_ict = vfold_cv(treino_ict, v = 5, repeats = 6, strata = intermediacao_acesso_terra),
+  ##workflows
+  wflow_ict = make_workflow_ict(treino_ict),
+  ##tunagem
+  tuned_params = tune_ict(wflow_ict)
 )
