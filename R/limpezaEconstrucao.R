@@ -9,10 +9,18 @@ faz_assunto <- function(ass_milic, ass_trafic){
 
 faz_amostra <- function(am_raw, dd, assunto){
   # tar_load(c(am_raw, dd, assunto))
+  am_raw <- am_raw |>
+    mutate(across(where(is.numeric), ~replace_na(.x, 0)))
   dd2 <- dd |>
     select(den_cd, ano, den_logr_uf, den_logr_bairro, den_logr_mun,
            matches("_prob"), cv, tcp, ada, milic, matches("trafic_"),
            sem_grupo, policia, origem) |> distinct()
+  pesos <- dd2 |>
+    select(den_cd, origem) |>
+    distinct() |>
+    group_by(origem) |>
+    count() |>
+    ungroup()
 
   left_join(am_raw, assunto, by = "den_cd") |>
     mutate(tipo_de_assunto = replace_na(tipo_de_assunto, "nao_informado")) |>
