@@ -77,7 +77,7 @@ tune_ict <- function(wflow_ict,  treino_ict, metrics, grid_size, cores = 4){
 
   # crtl <- finetune::control_race(save_pred = F, save_workflow = F, verbose = T)
 
-    tune_grid(wflow_ict,
+  finetune::tune_race_anova(wflow_ict,
                             resamples = fold_ict,
                             metrics = metrics,
                             param_info = param,

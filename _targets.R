@@ -82,5 +82,5 @@ tar_plan(
                                                pr_auc,
                                                roc_auc,
                                                average_precision),
-                          grid_size = 500, cores = 4)
+                          grid_size = 1000, cores = 15)
 )
