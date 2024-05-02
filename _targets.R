@@ -69,11 +69,18 @@ tar_plan(
   #modelo para intermediação de acesso à terra####
   ##split
   split_inic_ict = initial_split(amostra_clean, strata =intermediacao_acesso_terra),
-  treino_ict  = training(split_inic_ict),
-  teste_ict = testing(split_inic_ict),
-  fold_ict = vfold_cv(treino_ict, v = 5, repeats = 6, strata = intermediacao_acesso_terra),
+  treino_ict  = faz_treino_ict(split_inic_ict),
+  # teste_ict = testing(split_inic_ict),
   ##workflows
   wflow_ict = make_workflow_ict(treino_ict),
   ##tunagem
-  tuned_params = tune_ict(wflow_ict)
+  tuned_params = tune_ict(wflow_ict,
+                          treino_ict,
+                          metrics = metric_set(bal_accuracy,
+                                               sens,
+                                               spec,
+                                               pr_auc,
+                                               roc_auc,
+                                               average_precision),
+                          grid_size = 500, cores = 4)
 )

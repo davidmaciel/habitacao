@@ -82,11 +82,10 @@ limpa_amostra <- function(x,
                     textstem::lemmatize_strings(dictionary = dic) |>
                     stringi::stri_trans_general(id = "Latin-ASCII")) |>
     #transformação das variáveis em fator
-    select(-origem.x, -den_logr_uf) |>
+    select(-origem.x, -den_logr_uf, -den_logr_bairro) |>
     rename("origem" = origem.y) |>
     mutate(origem = factor(origem),
-           den_logr_mun = factor(den_logr_mun),
-           den_logr_bairro = factor(den_logr_bairro)) |>
+           den_logr_mun = factor(den_logr_mun)) |>
     clean_names()
   vars <- c("cv","tcp","ada","milic","trafic_na","trafic_terge","trafic_noun",
             "sem_grupo","policia", "intermediacao_acesso_terra",
@@ -99,4 +98,18 @@ limpa_amostra <- function(x,
     mutate(peso = if_else(origem == "trafico", 9.975, 1))
 
 
+}
+
+faz_treino_ict <- function(split){
+  # tar_load(split_inic_ict)
+  treino_ict <- training(split)
+
+  pesos <- treino_ict |>
+    tabyl(intermediacao_acesso_terra)
+
+  peso <- pesos$n[2]/pesos$n[1]
+
+   treino_ict |>
+    mutate(importancia = if_else(intermediacao_acesso_terra == "sim", peso, 1),
+           importancia = importance_weights(importancia))
 }

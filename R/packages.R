@@ -3,6 +3,8 @@ if(system.file(package = "pacman") == ""){
 }
 
 pacman::p_load(
+  conflicted,
+  lme4,
   finetune,
   doParallel,
   data.table,
@@ -22,10 +24,12 @@ pacman::p_load(
   fst,
   stopwords,
   textstem,
-  fastDummies
+  fastDummies,
+  xgboost
 )
 conflicts_prefer(dplyr::select)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(spatstat.geom::area)
 conflicts_prefer(dplyr::lag)
 conflicts_prefer(yardstick::spec)
+conflicts_prefer(recipes::update)
