@@ -94,22 +94,9 @@ limpa_amostra <- function(x,
             "colaboracao_associativismo")
   x |>
     mutate(across(all_of(vars), ~factor(.x, levels = c(1,0), labels = c("sim","não")))) |>
-    mutate(ano = ano - min(ano)) |>
-    mutate(peso = if_else(origem == "trafico", 9.975, 1))
+    mutate(ano = ano - min(ano))
 
 
 }
 
-faz_treino_ict <- function(split){
-  # tar_load(split_inic_ict)
-  treino_ict <- training(split)
 
-  pesos <- treino_ict |>
-    tabyl(intermediacao_acesso_terra)
-
-  peso <- pesos$n[2]/pesos$n[1]
-
-   treino_ict |>
-    mutate(importancia = if_else(intermediacao_acesso_terra == "sim", peso, 1),
-           importancia = importance_weights(importancia))
-}

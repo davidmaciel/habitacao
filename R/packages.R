@@ -3,6 +3,8 @@ if(system.file(package = "pacman") == ""){
 }
 
 pacman::p_load(
+  future,
+  googledrive,
   conflicted,
   lme4,
   finetune,

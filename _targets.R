@@ -46,7 +46,7 @@ tar_option_set(
 
 # Run the R scripts in the R/ folder with your custom functions:
 tar_source()
-drive_auth()
+googledrive::drive_auth()
 set.seed(22)
 # tar_source("other_functions.R") # Source other scripts as needed.
 
@@ -66,21 +66,53 @@ tar_plan(
   assunto = faz_assunto(ass_milic, ass_trafic),
   amostra = faz_amostra(am_raw, dd, assunto),
   amostra_clean  = limpa_amostra(amostra, stopwords_source = "stopwords-iso"),
-  #modelo para intermediação de acesso à terra####
-  ##split
+  #modelos gerais###########
+  gbt =   modelo <-
+    parsnip::boost_tree(
+      mtry = tune::tune(),
+      trees = tune::tune(),
+      tree_depth = tune::tune(),
+      learn_rate = tune::tune(),
+      loss_reduction = tune::tune(),
+      sample_size = tune::tune()
+    ) |>
+    parsnip::set_engine("xgboost") |>
+    parsnip::set_mode("classification"),
+  #wkl para intermediação de acesso à terra####
+
   split_inic_ict = initial_split(amostra_clean, strata =intermediacao_acesso_terra),
-  treino_ict  = faz_treino_ict(split_inic_ict),
-  # teste_ict = testing(split_inic_ict),
-  ##workflows
-  wflow_ict = make_workflow_ict(treino_ict),
-  ##tunagem
-  tuned_params = tune_ict(wflow_ict,
-                          treino_ict,
-                          metrics = metric_set(bal_accuracy,
-                                               sens,
-                                               spec,
-                                               pr_auc,
-                                               roc_auc,
-                                               average_precision),
-                          grid_size = 1000, cores = 15)
+  treino_ict  = training(split_inic_ict),
+  rec_ict = make_rec(treino_ict, col = "intermediacao_acesso_terra"),
+  wkl_ict = workflow() |> add_recipe(rec_ict) |> add_model(gbt),
+  param_ict = finalize_param(wkl_ict),
+  grade_ict = grid_latin_hypercube(param_ict, size = 384),
+  fold_ict = make_fold(treino_ict, v = 5, repeats = 6, strata_var = intermediacao_acesso_terra),
+  tune1st_ict = first_tune(wkl_ict, fold = fold_ict, param = param_ict, grade = grade_ict, cores = 4,
+                           metrics = metric_set(f_meas,
+                                                sens,
+                                                spec,
+                                                precision,
+                                                pr_auc,
+                                                roc_auc,
+                                                brier_class,
+                                                bal_accuracy)),
+  tune2nd_ict = second_tune(wkl = wkl_ict,
+                            fold = fold_ict,
+                            metrics = metric_set(f_meas,
+                                                           sens,
+                                                           spec,
+                                                           precision,
+                                                           pr_auc,
+                                                           roc_auc,
+                                                           brier_class,
+                                                           bal_accuracy),
+                            param = param_ict,  initial = tune1st_ict, cores = 5),
+  ajustado1 = ajuste_final(tuned = tune2nd_ict,
+                           wkl = wkl_ict,
+                           split = split_inic_ict,
+                           best_metric = "f_meas"),
+  tar_file(out_ajustado1, write_file(ajustado1, "output/ajustado1.rds"))
+
+
+
 )
