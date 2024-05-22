@@ -113,17 +113,58 @@ faz_treino_ict <- function(split){
     mutate(case_wts = if_else(intermediacao_acesso_terra == "sim", peso, 1))
 }
 
-tira_nova_amostra <- function(dd, amostra_clean, file){
+tira_nova_amostra <- function(dd, amostra_clean, assunto,file){
   set.seed(22)
+
+  cat <- c(
+    "ATERRAMENTO DE RIO/MANGUE/LAGOA",
+    "CONSTRUÇÃO IRREGULAR",
+    "DESMATAMENTO FLORESTAL",
+    "DANOS A PATRIMÔNIO PÚBLICO",
+    "DESPEJO DE ESGOTO CLANDESTINO",
+    "EXTRAÇÃO IRREGULAR DE ÁRVORES",
+    "EXTRAÇÃO IRREGULAR DE SOLO",
+    "INVASÃO DE PROPRIEDADE",
+    "LOTEAMENTO IRREGULAR",
+    "OBRA IRREGULAR",
+    "OBSTRUÇÃO DE VIAS PÚBLICAS",
+    "QUEIMADAS",
+    "INCÊNDIO E PERIGO",
+    "LIXO ACUMULADO",
+    "DESABAMENTO E PERIGO",
+    "ESTACIONAMENTO IRREGULAR"
+  )
+  filtro <- assunto %>% filter(
+    tipo_de_assunto %in% cat
+  )
+  dd2 <- inner_join(dd, filtro)
   ids <- amostra_clean %>%
     pull(den_cd) %>%
     unique()
-  novo <- dd %>%
+  #4050 denúncias de milícia que caem nas categorias prováveis
+  novo1 <- dd2 %>%
     select(den_cd, den_texto, origem) %>%
     distinct() %>%
     filter(!(den_cd %in% ids) & origem == "milicia") %>%
-    slice_sample(n = 5000)
+    slice_sample(n = 4050)
+  #450 denúncias de tráfico que caem nas categorias prováveis
+  novo2 <- dd2 %>%
+    select(den_cd, den_texto, origem) %>%
+    distinct() %>%
+    filter(!(den_cd %in% ids) & origem == "trafico") %>%
+    slice_sample(n = 450)
+  #500 denúncias aleatórias
+  novo3 <- dd %>%
+    select(den_cd, den_texto, origem) %>%
+    distinct() %>%
+    filter(!(den_cd %in% ids) &
+             !(den_cd%in%unique(novo2$den_cd)) &
+             !(den_cd %in% unique(novo2$den_cd))
+           )%>%
+    slice_sample(n = 500)
+  novo <- bind_rows(novo1, novo2, novo3)
   readr::write_excel_csv2(novo, file = file)
   file
 
 }
+
