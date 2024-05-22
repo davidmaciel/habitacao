@@ -66,6 +66,7 @@ tar_plan(
   assunto = faz_assunto(ass_milic, ass_trafic),
   amostra = faz_amostra(am_raw, dd, assunto),
   amostra_clean  = limpa_amostra(amostra, stopwords_source = "stopwords-iso"),
+  nova_amostra = tira_nova_amostra(dd, amostra_clean, file = "nova_amostra.csv"),
   #modelos gerais###########
   gbt =   modelo <-
     parsnip::boost_tree(

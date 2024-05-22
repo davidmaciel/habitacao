@@ -3,6 +3,7 @@ if(system.file(package = "pacman") == ""){
 }
 
 pacman::p_load(
+  readxl,
   future,
   googledrive,
   conflicted,

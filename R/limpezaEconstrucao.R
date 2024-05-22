@@ -94,9 +94,36 @@ limpa_amostra <- function(x,
             "colaboracao_associativismo")
   x |>
     mutate(across(all_of(vars), ~factor(.x, levels = c(1,0), labels = c("sim","não")))) |>
-    mutate(ano = ano - min(ano))
+    mutate(ano = ano - min(ano)) #|>
+    # mutate(peso = if_else(origem == "trafico", 9.975, 1))
 
 
 }
 
+faz_treino_ict <- function(split){
+  # tar_load(split_inic_ict)
+  treino_ict <- training(split)
 
+  pesos <- treino_ict |>
+    tabyl(intermediacao_acesso_terra)
+
+  peso <- pesos$n[2]/pesos$n[1]
+
+   treino_ict |>
+    mutate(case_wts = if_else(intermediacao_acesso_terra == "sim", peso, 1))
+}
+
+tira_nova_amostra <- function(dd, amostra_clean, file){
+  set.seed(22)
+  ids <- amostra_clean %>%
+    pull(den_cd) %>%
+    unique()
+  novo <- dd %>%
+    select(den_cd, den_texto, origem) %>%
+    distinct() %>%
+    filter(!(den_cd %in% ids) & origem == "milicia") %>%
+    slice_sample(n = 5000)
+  readr::write_excel_csv2(novo, file = file)
+  file
+
+}
