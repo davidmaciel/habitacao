@@ -39,9 +39,9 @@ faz_amostra <- function(am_raw, dd, assunto){
 }
 
 limpa_amostra <- function(x,
-                            stopwords_source = c("stopwords-iso",
-                                                 "snowball",
-                                                 "nltk")){
+                          stopwords_source = c("stopwords-iso",
+                                               "snowball",
+                                               "nltk")){
 
   stopwords_source <- match.arg(stopwords_source)
 
@@ -95,7 +95,7 @@ limpa_amostra <- function(x,
   x |>
     mutate(across(all_of(vars), ~factor(.x, levels = c(1,0), labels = c("sim","não")))) |>
     mutate(ano = ano - min(ano)) #|>
-    # mutate(peso = if_else(origem == "trafico", 9.975, 1))
+  # mutate(peso = if_else(origem == "trafico", 9.975, 1))
 
 
 }
@@ -109,7 +109,7 @@ faz_treino_ict <- function(split){
 
   peso <- pesos$n[2]/pesos$n[1]
 
-   treino_ict |>
+  treino_ict |>
     mutate(case_wts = if_else(intermediacao_acesso_terra == "sim", peso, 1))
 }
 
@@ -160,7 +160,7 @@ tira_nova_amostra <- function(dd, amostra_clean, assunto,file){
     filter(!(den_cd %in% ids) &
              !(den_cd%in%unique(novo2$den_cd)) &
              !(den_cd %in% unique(novo2$den_cd))
-           )%>%
+    )%>%
     slice_sample(n = 500)
   novo <- bind_rows(novo1, novo2, novo3)
   readr::write_excel_csv2(novo, file = file)
@@ -179,20 +179,20 @@ make_dd4hab <- function(dd, ass_trafic, ass_milic, shp_rio){
     distinct()
   dd2 <- dd %>% distinct() %>%
     inner_join(a)
-#total de denúncias antes do join
+  #total de denúncias antes do join
   t_den1 <- dd %>% pull(den_cd) %>% unique() %>% length()
   t_den2 <- dd2 %>% pull(den_cd) %>% unique() %>% length()
 
 
 
-#distribuição por ano das denúnicas perdidas
+  #distribuição por ano das denúnicas perdidas
   ind <- !dd$den_cd %in% dd2$den_cd
   x <- dd %>%
     filter(ind) %>%
     select(den_cd, ano) %>%
     distinct() %>%
     tabyl(ano)
-#distribuição por tráfico ou milícia
+  #distribuição por tráfico ou milícia
   ind <- !dd$den_cd %in% dd2$den_cd
   x2 <- dd %>%
     filter(ind) %>%
@@ -202,10 +202,10 @@ make_dd4hab <- function(dd, ass_trafic, ass_milic, shp_rio){
 
 
   obs <- str_c("Inicialmente, são ", t_den1, " denúncias únicas. O join com o assunto reduz esse total para ", t_den2, " - uma redução de ",
-      scales::percent((t_den2 - t_den1)/t_den1, accuracy = 0.01),
-      ". A média do percentual de denúncias perdidas por ano é de ",
-      scales::percent(mean(x$percent), 0.01), ", com desvio padrão de ",
-      scales::percent(sd(x$percent), 0.01), " Todas as ", t_den1 - t_den2, ". perdidas são do tráfico")
+               scales::percent((t_den2 - t_den1)/t_den1, accuracy = 0.01),
+               ". A média do percentual de denúncias perdidas por ano é de ",
+               scales::percent(mean(x$percent), 0.01), ", com desvio padrão de ",
+               scales::percent(sd(x$percent), 0.01), " Todas as ", t_den1 - t_den2, ". perdidas são do tráfico")
 
   dd3 <- dd2 %>%
     select(den_cd, den_dt_rec, ano, den_texto, "endereco" = endereco_geocode, lat_here, lon_here, lat_ggmap, lon_ggmap,
@@ -249,4 +249,4 @@ make_dd4hab <- function(dd, ass_trafic, ass_milic, shp_rio){
        "grupos_armados" = grar,
        "obs" = obs)
 
-  }
+}
