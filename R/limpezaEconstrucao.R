@@ -168,3 +168,81 @@ tira_nova_amostra <- function(dd, amostra_clean, assunto,file){
 
 }
 
+make_dd4hab <- function(dd, ass_trafic, ass_milic, shp_rio){
+  a1 <- ass_trafic %>%
+    rename("assunto" = tipo_de_assunto) %>%
+    distinct()
+  a2 <- ass_milic %>%
+    mutate(assunto = if_else(is.na(tpa_ds), tipo_de_assunto, tpa_ds)) %>%
+    select(den_cd, assunto) %>% distinct()
+  a <- bind_rows(a1, a2) %>%
+    distinct()
+  dd2 <- dd %>% distinct() %>%
+    inner_join(a)
+#total de denúncias antes do join
+  t_den1 <- dd %>% pull(den_cd) %>% unique() %>% length()
+  t_den2 <- dd2 %>% pull(den_cd) %>% unique() %>% length()
+
+
+
+#distribuição por ano das denúnicas perdidas
+  ind <- !dd$den_cd %in% dd2$den_cd
+  x <- dd %>%
+    filter(ind) %>%
+    select(den_cd, ano) %>%
+    distinct() %>%
+    tabyl(ano)
+#distribuição por tráfico ou milícia
+  ind <- !dd$den_cd %in% dd2$den_cd
+  x2 <- dd %>%
+    filter(ind) %>%
+    select(den_cd, origem) %>%
+    distinct() %>%
+    tabyl(origem)
+
+
+  obs <- str_c("Inicialmente, são ", t_den1, " denúncias únicas. O join com o assunto reduz esse total para ", t_den2, " - uma redução de ",
+      scales::percent((t_den2 - t_den1)/t_den1, accuracy = 0.01),
+      ". A média do percentual de denúncias perdidas por ano é de ",
+      scales::percent(mean(x$percent), 0.01), ", com desvio padrão de ",
+      scales::percent(sd(x$percent), 0.01), " Todas as ", t_den1 - t_den2, ". perdidas são do tráfico")
+
+  dd3 <- dd2 %>%
+    select(den_cd, den_dt_rec, ano, den_texto, "endereco" = endereco_geocode, lat_here, lon_here, lat_ggmap, lon_ggmap,
+           den_gps_lat, den_gps_long, assunto, cv, tcp, ada, milic, origem,
+           matches("trafic_")) %>%
+    mutate(lat = case_when(
+      is.na(lat_here) & is.na(lat_ggmap) ~ den_gps_lat,
+      is.na(lat_here) & !is.na(lat_ggmap) ~ lat_ggmap,
+      T ~ lat_here),
+      lon = case_when(
+        is.na(lon_here) & is.na(lon_ggmap) ~ den_gps_long,
+        is.na(lon_here) & !is.na(lon_ggmap) ~ lon_ggmap,
+        T ~ lon_here)) %>%
+    select(-c(lat_here, lon_here, lat_ggmap, lon_ggmap, den_gps_lat, den_gps_long)) %>%
+    distinct()
+  assuntos <- dd3 %>%
+    select(den_cd, assunto) %>%
+    distinct()
+  denuncias <- dd3 %>% select(-c(assunto, cv, tcp, ada, milic, matches("trafic_"))) %>% distinct() %>%
+    mutate(state = str_extract(endereco, "\\w{2}$"))
+  grar <- dd3 %>% select(den_cd, cv, tcp, ada, milic, matches("trafic_")) %>%
+    pivot_longer(cols = c(cv, tcp, ada, milic, matches("trafic_"))) %>%
+    mutate(name = if_else(str_detect(name, "trafic_"), "facção do tráfico indefinida", name)) %>%
+    distinct() %>%
+    filter(value == 1) %>%
+    select(-value)
+
+  dd_sf <- denuncias %>%
+    st_as_sf(coords = c("lon", "lat"))
+  st_crs(dd_sf) <- 4326
+  dd_sf <- st_make_valid(dd_sf)
+  shp_rio <- st_make_valid(shp_rio)
+  x <- st_join(dd_sf, shp_rio)
+
+  list("denuncias" = x,
+       "assuntos" = assuntos,
+       "grupos_armados" = grar,
+       "obs" = obs)
+
+  }

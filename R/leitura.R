@@ -37,3 +37,17 @@ le_amostra <- function(url){
                  path = paste0(temp, ".xlsx"))
   read_xlsx(paste0(temp, ".xlsx"))
 }
+
+le_shp <- function(url){
+  temp <- tempfile()
+  temp_dir <- tempdir()
+  drive_download(url,
+                 path = paste0(temp, ".zip"))
+  unzip(paste0(temp, ".zip"), exdir = temp_dir)
+  arquivos <- list.files(temp_dir, full.names = T)
+  arquivo <- arquivos[str_detect(arquivos, "shp$")]
+  x <- st_read(arquivo)
+  x <- st_transform(x,crs = 4326)
+  x2 <- x %>% st_union()
+  x2 %>% st_as_sf()
+}
