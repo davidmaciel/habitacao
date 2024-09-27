@@ -58,15 +58,18 @@ tar_plan(
   file_amostra = "https://docs.google.com/spreadsheets/d/1i-lv310xUTSiS8SNisLh_ied_Z8Jg9dg",
   file_dd = "https://drive.google.com/file/d/1PnKd0BwUCIy3tiwTget-hL_cc4Y2XJwC",
   file_pt = "pt_BR.dic",
+  file_shp= "https://drive.google.com/file/d/1-xDpaKYi7fcJsIrpJRMIrKQLFhSlADcr",
   dd = le_dd(file_dd),
   ass_trafic = le_assunto(drive_trafico),
   ass_milic = le_assunto(drive_milicia),
   am_raw = le_amostra(file_amostra),
+  shp_rio = le_shp(file_shp),
   #construção e limpeza####
   assunto = faz_assunto(ass_milic, ass_trafic),
   amostra = faz_amostra(am_raw, dd, assunto),
   amostra_clean  = limpa_amostra(amostra, stopwords_source = "stopwords-iso"),
   nova_amostra = tira_nova_amostra(dd, amostra_clean, assunto,file = "nova_amostra.csv"),
+  dd4hab = make_dd4hab(dd, ass_trafic, ass_milic, shp_rio),
   #modelos gerais###########
   gbt =   modelo <-
     parsnip::boost_tree(
