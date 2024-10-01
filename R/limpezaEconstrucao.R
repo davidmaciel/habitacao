@@ -238,19 +238,18 @@ make_dd4hab <- function(dd, ass_trafic, ass_milic, shp_rio){
   st_crs(dd_sf) <- 4326
   dd_sf <- st_make_valid(dd_sf)
   shp_rio <- st_make_valid(shp_rio)
-  x <- st_join(dd_sf, shp_rio)
+  x <- st_join(dd_sf, shp_rio,join = st_within, left = F)
   coords <- x %>% st_coordinates() %>% as_tibble()
   x2 <- x %>% st_drop_geometry() %>%
     bind_cols(coords) %>%
-    rename("lon" = X, "lat" = Y)
+    rename("lon" = X, "lat" = Y) %>%
+    mutate(lon = lon + sample(seq(-0.00005, 0.00005, by = 0.00001), 1),
+           lat = lat + sample(seq(-0.00005, 0.00005, by = 0.00001), 1))
 
 
   names(grar) <- c("den_cd", "grar")
 
-  x2 <- x2 %>% as.data.table()
-  x2 <- x2[,den_texto  := str_replace_all(
-    str_wrap(den_texto, width = 300),
-    "\\n", "<br>")]
+
 
 
 
