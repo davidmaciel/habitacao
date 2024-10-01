@@ -244,6 +244,16 @@ make_dd4hab <- function(dd, ass_trafic, ass_milic, shp_rio){
     bind_cols(coords) %>%
     rename("lon" = X, "lat" = Y)
 
+
+  names(grar) <- c("den_cd", "grar")
+
+  x2 <- x2 %>% as.data.table()
+  x2 <- x2[,den_texto  := str_replace_all(
+    str_wrap(den_texto, width = 300),
+    "\\n", "<br>")]
+
+
+
   list("denuncias" = x2,
        "assuntos" = assuntos,
        "grupos_armados" = grar,

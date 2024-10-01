@@ -3,6 +3,7 @@ if(system.file(package = "pacman") == ""){
 }
 
 pacman::p_load(
+  data.table,
   sf,
   readxl,
   future,
